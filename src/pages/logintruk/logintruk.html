@@ -1,0 +1,31 @@
+<ion-header>
+  <ion-navbar color="darkitem">
+    <ion-title>Login Truk</ion-title>
+  </ion-navbar>
+</ion-header>
+<ion-content style="background:#363a45;">
+  <form [formGroup]="myForm" style="margin-top:10%;">
+    <ion-row class="container-row">
+      <ion-col col-12 col-md-3 col-xl-3 style="background: transparent;border:0px;">
+        <div class="imgcontainer">
+          <img style="border: 2px solid;border-color:#fff;" src="../../assets/imgs/users.png" class="avatar">
+        </div>
+      </ion-col>
+      <ion-col col-12 col-md-9 col-xl-9 style="background: transparent;border:0px;">
+        <div class="container-login">
+          Login
+        </div>
+        <div class="container">
+          <ion-item no-lines>
+            <ion-label stacked>No Truck</ion-label>
+            <ion-select formControlName="truck" placeholder="B-1234-DC" (click)="doGetTruck()">
+              <ion-option *ngFor="let list of trucklist" value="{{list.NoTruk}}">{{list.NoTruk}}</ion-option>
+            </ion-select>
+          </ion-item>
+          <input padding type="password" placeholder="Enter Password" formControlName="password">
+          <button type="submit" [disabled]="!myForm.valid" (click)="doLogin()">Login</button>
+        </div>
+      </ion-col>
+    </ion-row>
+  </form>
+</ion-content>

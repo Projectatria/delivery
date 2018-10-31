@@ -1,0 +1,67 @@
+<ion-header>
+  <ion-navbar color="darkitem">
+    <div style="text-align:center;height: 0px;">
+      <button ion-button clear color="secondary" style="margin-top:-5px;z-index:999;padding:10px;" (click)="doLogout()">
+        <ion-icon name="md-power" style="font-size: 30px;font-weight: bold;"></ion-icon>
+      </button>
+    </div>
+    <div style="text-align:right;height: 0px;">
+      <button ion-button clear color="light" style="margin-top:-5px;z-index:999;padding:10px;" (click)="doSettings()">
+        <ion-icon name="md-key" style="font-size: 30px;"></ion-icon>
+      </button>
+    </div>
+    <ion-title style="color:#217481;text-shadow: 
+    -1px -1px 0px #dedede,
+     0px -1px 0px #dedede,
+     1px -1px 0px #dedede,
+    -1px  0px 0px #dedede,
+     1px  0px 0px #dedede,
+    -1px  1px 0px #dedede,
+     0px  1px 0px #dedede,
+     1px  1px 0px #dedede,
+    -2px -2px 0px #dedede,">
+      {{notruk}}
+    </ion-title>
+  </ion-navbar>
+</ion-header>
+<ion-content style="background:#363a45;">
+  <ion-card *ngFor="let detailbook of detailpengiriman" style="background:#363a45;">
+    <ion-row>
+      <ion-col col-2 style="border-right:1px solid;border-color:#dedede;font-size:30px;font-weight: bold;text-align: center;">
+        <div style="margin-top:40px;color:#fff;">{{detailbook.NoUrutKirim}}</div>
+      </ion-col>
+      <ion-col col-10>
+        <ion-card-content padding>
+          <h2>
+            <b style="color:#fff;">No Booking : {{detailbook.NoBooking}}</b>
+          </h2>
+          <div *ngFor="let datatransaksi of datatr">
+            <div *ngIf="datatransaksi['Receipt No_'] == detailbook.NoBooking">
+              <div *ngFor="let datasales of pushdata">
+                <div *ngIf="datasales['0'] == datatransaksi['Retail SO No_']">
+                  <p style="color:#fff;">
+                    <b>{{datasales['1']}}</b>
+                  </p>
+                  <p style="color:#fff;">{{datasales['2']}}</p>
+                  <p style="color:#fff;">{{datasales['3']}}</p>
+                  <div *ngFor="let datajarak of pushjarak">
+                    <div *ngIf="datasales['0'] == datajarak['0']">
+                      <p style="color:#fff;">
+                        <b>{{datajarak['1']}} dari Lokasi Anda ({{datajarak['2']}})</b>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ion-card-content>
+        <ion-row style="border-top:1px solid;border-color:#dedede;">
+          <ion-col>
+            <button ion-button full color="secondary" (click)="doMaps(detailbook)">GO</button>
+          </ion-col>
+        </ion-row>
+      </ion-col>
+    </ion-row>
+  </ion-card>
+</ion-content>

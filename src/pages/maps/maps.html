@@ -1,0 +1,58 @@
+<ion-header>
+  <ion-navbar *ngIf="!start" hideBackButton="false" color="darkitem">
+    <ion-title>
+      Maps
+    </ion-title>
+  </ion-navbar>
+  <ion-navbar *ngIf="start" hideBackButton="true" color="darkitem">
+      <ion-title>
+        Maps
+      </ion-title>
+    </ion-navbar>
+</ion-header>
+<ion-content>
+  <div>
+    <ion-item text-wrap style="border-top:2px solid;border-color:#2d3038;" no-lines color="darkitem">
+      <h1 style="padding-bottom:5px;font-weight: bold;">{{name}}</h1>
+      <p style="font-size:12px;padding-bottom:5px;">{{address}}</p>
+      <h3 style="font-weight: bold;">{{telp}}</h3>
+    </ion-item>
+  </div>
+  <div id="map_canvas" class="full-map"></div>
+</ion-content>
+<ion-footer style="background: #363a45;">
+  <ion-list style="background:#363a45;color:#fff;">
+    <div style="text-align: center;border-bottom:1px solid;border-color:#dedede;font-size:15px;">
+      <ion-row>
+        <ion-col padding style="text-align: left;border-right:1px solid;border-color:#dedede;">Jarak Tempuh: {{jaraktempuh}}</ion-col>
+        <ion-col padding style="text-align: left;">Waktu: {{waktuperjalanan}}</ion-col>
+      </ion-row>
+    </div>
+    <div style="text-align: center;border-bottom:1px solid;border-color:#dedede;font-size:15px;">
+      <ion-row>
+        <ion-col>
+          <button ion-button clear (click)="doList()">
+            <ion-icon name="md-filing" style="font-size:40px;color:#fff;"></ion-icon>
+          </button>
+        </ion-col>
+        <ion-col>
+          <button ion-button clear (click)="doMaps()">
+            <ion-icon name="md-map" style="font-size:40px;color:#fff;"></ion-icon>
+          </button>
+        </ion-col>
+        <ion-col>
+          <button ion-button clear (click)="doReport()">
+            <ion-icon name="md-flag" style="font-size:40px;color:#fff;"></ion-icon>
+          </button>
+        </ion-col>
+      </ion-row>
+    </div>
+  </ion-list>
+  <ion-row style="padding:5px;padding-right:10px;">
+    <ion-col>
+      <button *ngIf="status == '0'" item-start style="height: 50px;font-size:20px;width:100%;" ion-button full color="secondary" (click)="doSendSMS()">Mulai</button>
+      <button *ngIf="status == '1'" item-start style="height: 50px;font-size:20px;width:100%;" ion-button full color="secondary" (click)="doSampaiTujuan()">Sampai Tujuan</button>
+      <button *ngIf="status == '2'" item-start style="height: 50px;font-size:20px;width:100%;" ion-button full color="secondary" (click)="doSelesai()">Selesai</button>
+    </ion-col>
+  </ion-row>
+</ion-footer>

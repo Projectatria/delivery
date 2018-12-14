@@ -21,7 +21,12 @@
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBPzPHMSkPcA83ZFHoZec54RYl6Pe0EAOU">
   </script>
   <script src="https://smtpjs.com/v2/smtp.js"></script>
-
+  <script src="https://apis.google.com/js/api.js" type="text/javascript"></script>
+  <script type="text/javascript">
+    gapi.load('auth2', function() {
+      // Library loaded.
+    });
+  </script>
   <!-- un-comment this code to enable service worker
   <script>
     if ('serviceWorker' in navigator) {

@@ -1,8 +1,10 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { NavController, LoadingController } from 'ionic-angular';
+import { IonicPage, NavController, LoadingController } from 'ionic-angular';
 import { ApiProvider } from '../../providers/api/api';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { Insomnia } from '@ionic-native/insomnia';
 
+@IonicPage()
 @Component({
   selector: 'page-home',
   templateUrl: 'home.html'
@@ -17,7 +19,13 @@ export class HomePage {
     public navCtrl: NavController,
     public loadingCtrl: LoadingController,
     public fb: FormBuilder,
-    public api: ApiProvider) {
+    public api: ApiProvider,
+    private insomnia: Insomnia) {
+    this.insomnia.keepAwake()
+      .then(
+        () => console.log('success'),
+        () => console.log('error')
+      );
     this.myForm = fb.group({
       userid: ['', Validators.compose([Validators.required])],
       password: ['', Validators.compose([Validators.required])]

@@ -5,10 +5,11 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 import { StatusBar } from '@ionic-native/status-bar';
 import { HttpClientModule } from '@angular/common/http';
 import { MyApp } from './app.component';
-import { HomePage } from '../pages/home/home';
 import { ApiProvider } from '../providers/api/api';
 import { GoogleMaps } from '@ionic-native/google-maps';
 import { IonicStorageModule } from '@ionic/storage';
+import { BackgroundMode } from '@ionic-native/background-mode';
+import { Insomnia } from '@ionic-native/insomnia';
 
 @NgModule({
   declarations: [
@@ -32,7 +33,9 @@ import { IonicStorageModule } from '@ionic/storage';
     SplashScreen,
     {provide: ErrorHandler, useClass: IonicErrorHandler},
     ApiProvider,
-    GoogleMaps
+    GoogleMaps,
+    BackgroundMode,
+    Insomnia
   ]
 })
 export class AppModule {}

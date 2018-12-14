@@ -5,6 +5,8 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Storage } from '@ionic/storage';
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Http, Headers, RequestOptions } from '@angular/http';
+import { BackgroundMode } from '@ionic-native/background-mode';
+import { Insomnia } from '@ionic-native/insomnia';
 import moment from 'moment';
 import {
   GoogleMaps,
@@ -47,7 +49,54 @@ export class LoginPage {
     public fb: FormBuilder,
     public navParams: NavParams,
     public storage: Storage,
-    public api: ApiProvider) {
+    public api: ApiProvider,
+    public backgroundMode: BackgroundMode,
+    private insomnia: Insomnia) {
+    this.insomnia.keepAwake()
+      .then(
+        () => console.log('success'),
+        () => console.log('error')
+      );
+    this.backgroundMode.enable();
+    this.backgroundMode.on("activate").subscribe(() => {
+      console.log('background mode')
+      this.truck = this.navParams.get('truck')
+      setInterval(() => {
+        this.storage.get('idtruck').then((val) => {
+          this.idtruck = val;
+        });
+        this.storage.get('notruck').then((val) => {
+          this.notruck = val;
+          this.truck = this.notruck
+        });
+      }, 1000);
+      this.interval = setInterval(() => {
+        let idtruck = this.idtruck
+        let option: MyLocationOptions = {
+          enableHighAccuracy: true
+        }
+        LocationService.getMyLocation(option).then((location: MyLocation) => {
+          let lat = location.latLng.lat
+          let lon = location.latLng.lng
+          if (idtruck) {
+            this.api.get("table/latlon", { params: { limit: 1, filter: "id_truck='" + idtruck + "' AND status = 'OPEN'", sort: "datetime" + " DESC " } })
+              .subscribe(val => {
+                let data = val['data']
+                if (data.length > 0) {
+                  if (data[0].latitude.substring(0, 8) == lat.toString().substring(0, 8) && data[0].longitude.substring(0, 9) == lon.toString().substring(0, 9)) {
+                  }
+                  else {
+                    this.doInsert(lat, lon, idtruck)
+                  }
+                }
+                else {
+                  this.doInsert(lat, lon, idtruck)
+                }
+              });
+          }
+        });
+      }, 5000);
+    });
     this.truck = this.navParams.get('truck')
     setInterval(() => {
       this.storage.get('idtruck').then((val) => {
@@ -67,10 +116,23 @@ export class LoginPage {
         let lat = location.latLng.lat
         let lon = location.latLng.lng
         if (idtruck) {
-          this.doInsert(lat, lon, idtruck)
+          this.api.get("table/latlon", { params: { limit: 1, filter: "id_truck='" + idtruck + "' AND status = 'OPEN'", sort: "datetime" + " DESC " } })
+            .subscribe(val => {
+              let data = val['data']
+              if (data.length > 0) {
+                if (data[0].latitude.substring(0, 8) == lat.toString().substring(0, 8) && data[0].longitude.substring(0, 9) == lon.toString().substring(0, 9)) {
+                }
+                else {
+                  this.doInsert(lat, lon, idtruck)
+                }
+              }
+              else {
+                this.doInsert(lat, lon, idtruck)
+              }
+            });
         }
       });
-    }, 10000);
+    }, 5000);
     this.myForm = fb.group({
       userid: [''],
       password: ['']
@@ -93,9 +155,11 @@ export class LoginPage {
           {
             "id": nextno,
             "id_truck": idtruck,
-            "latitude": lat,
-            "longitude": lon,
-            "datetime": moment().format('YYYY-MM-DD HH:mm:ss')
+            "latitude": lat.toString().substring(0, 7),
+            "longitude": lon.toString().substring(0, 8),
+            "datetime": moment().format('YYYY-MM-DD HH:mm:ss'),
+            "devices" : 'MOBILE',
+            "status": 'OPEN'
           },
           { headers })
           .subscribe(

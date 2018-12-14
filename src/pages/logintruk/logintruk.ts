@@ -4,6 +4,7 @@ import { ApiProvider } from '../../providers/api/api';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Http, Headers, RequestOptions } from '@angular/http';
+import { Insomnia } from '@ionic-native/insomnia';
 import { Storage } from '@ionic/storage';
 import moment from 'moment';
 import {
@@ -44,7 +45,13 @@ export class LogintrukPage {
     public storage: Storage,
     public fb: FormBuilder,
     public app: App,
-    public api: ApiProvider) {
+    public api: ApiProvider,
+    private insomnia: Insomnia) {
+    this.insomnia.keepAwake()
+      .then(
+        () => console.log('success'),
+        () => console.log('error')
+      );
     this.storage.get('idtruck').then((val) => {
       this.idtruck = val;
     });
@@ -84,32 +91,32 @@ export class LogintrukPage {
         let truckdata = val['data']
         if (truckdata.length > 0) {
           this.api.get("table/truck_login", { params: { limit: 1, filter: "id_truck='" + truckdata[0].IdTruk + "' AND password='" + this.myForm.value.password + "'" } })
-          .subscribe(val => {
-            this.trucklist = val['data']
-            if (this.trucklist.length > 0) {
-              this.storage.set('idtruck', truckdata[0].IdTruk);
-              this.storage.set('notruck', truckdata[0].NoTruk);
-              this.app.getRootNav().setRoot('LoginPage', {
-                truck: this.myForm.value.truck,
-                idtruck: truckdata[0].IdTruk
-              });
-            }
-            else {
+            .subscribe(val => {
+              this.trucklist = val['data']
+              if (this.trucklist.length > 0) {
+                this.storage.set('idtruck', truckdata[0].IdTruk);
+                this.storage.set('notruck', truckdata[0].NoTruk);
+                this.app.getRootNav().setRoot('LoginPage', {
+                  truck: this.myForm.value.truck,
+                  idtruck: truckdata[0].IdTruk
+                });
+              }
+              else {
+                let alert = this.alertCtrl.create({
+                  subTitle: 'Password salah',
+                  buttons: ['OK']
+                });
+                alert.present();
+                this.myForm.get('password').setValue('')
+              }
+            }, err => {
               let alert = this.alertCtrl.create({
                 subTitle: 'Password salah',
                 buttons: ['OK']
               });
               alert.present();
               this.myForm.get('password').setValue('')
-            }
-          }, err => {
-            let alert = this.alertCtrl.create({
-              subTitle: 'Password salah',
-              buttons: ['OK']
             });
-            alert.present();
-            this.myForm.get('password').setValue('')
-          });
         }
         else {
           let alert = this.alertCtrl.create({

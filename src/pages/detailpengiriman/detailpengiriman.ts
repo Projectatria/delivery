@@ -3,6 +3,8 @@ import { App, AlertController, IonicPage, NavController, NavParams, LoadingContr
 import { ApiProvider } from '../../providers/api/api';
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Http, Headers, RequestOptions } from '@angular/http';
+import { BackgroundMode } from '@ionic-native/background-mode';
+import { Insomnia } from '@ionic-native/insomnia';
 import moment from 'moment';
 import {
   GoogleMaps,
@@ -22,6 +24,8 @@ import {
   GeocoderResult
 } from '@ionic-native/google-maps';
 import { Md5 } from 'ts-md5/dist/md5';
+
+declare var gapi: any;
 
 @IonicPage()
 @Component({
@@ -58,7 +62,49 @@ export class DetailpengirimanPage {
     public app: App,
     public alertCtrl: AlertController,
     public loadingCtrl: LoadingController,
-    public api: ApiProvider) {
+    public api: ApiProvider,
+    public backgroundMode: BackgroundMode,
+    private insomnia: Insomnia) {
+    this.insomnia.keepAwake()
+      .then(
+        () => console.log('success'),
+        () => console.log('error')
+      );
+    this.backgroundMode.enable();
+    this.backgroundMode.on("activate").subscribe(() => {
+      this.noregistrasitruk = this.navParams.get('noregistrasitruck')
+      this.idtruk = this.navParams.get('idtruk')
+      this.notruk = this.navParams.get('notruk')
+      this.userid = this.navParams.get('userid')
+      this.book = this.navParams.get('book')
+      this.interval = setInterval(() => {
+        let idtruck = this.idtruk
+        let iddriver = this.userid
+        let option: MyLocationOptions = {
+          enableHighAccuracy: true
+        }
+        LocationService.getMyLocation(option).then((location: MyLocation) => {
+          let lat = location.latLng.lat
+          let lon = location.latLng.lng
+          if (idtruck && iddriver) {
+            this.api.get("table/latlon", { params: { limit: 1, filter: "id_truck='" + idtruck + "' AND status = 'OPEN'", sort: "datetime" + " DESC " } })
+              .subscribe(val => {
+                let data = val['data']
+                if (data.length > 0) {
+                  if (data[0].latitude.substring(0, 8) == lat.toString().substring(0, 8) && data[0].longitude.substring(0, 9) == lon.toString().substring(0, 9)) {
+                  }
+                  else {
+                    this.doInsert(lat, lon, idtruck, iddriver)
+                  }
+                }
+                else {
+                  this.doInsert(lat, lon, idtruck, iddriver)
+                }
+              });
+          }
+        });
+      }, 5000);
+    });
     this.loading = this.loadingCtrl.create({
       content: 'Please wait...'
     });
@@ -79,11 +125,24 @@ export class DetailpengirimanPage {
         LocationService.getMyLocation(option).then((location: MyLocation) => {
           let lat = location.latLng.lat
           let lon = location.latLng.lng
-          if (idtruck) {
-            this.doInsert(lat, lon, idtruck, iddriver)
+          if (idtruck && iddriver) {
+            this.api.get("table/latlon", { params: { limit: 1, filter: "id_truck='" + idtruck + "' AND status = 'OPEN'", sort: "datetime" + " DESC " } })
+              .subscribe(val => {
+                let data = val['data']
+                if (data.length > 0) {
+                  if (data[0].latitude.substring(0, 8) == lat.toString().substring(0, 8) && data[0].longitude.substring(0, 9) == lon.toString().substring(0, 9)) {
+                  }
+                  else {
+                    this.doInsert(lat, lon, idtruck, iddriver)
+                  }
+                }
+                else {
+                  this.doInsert(lat, lon, idtruck, iddriver)
+                }
+              });
           }
         });
-      }, 10000);
+      }, 5000);
       this.doGetDetailPengiriman()
     });
   }
@@ -100,7 +159,8 @@ export class DetailpengirimanPage {
             "id_driver": iddriver,
             "latitude": lat,
             "longitude": lon,
-            "datetime": moment().format('YYYY-MM-DD HH:mm:ss')
+            "datetime": moment().format('YYYY-MM-DD HH:mm:ss'),
+            "status": 'OPEN'
           },
           { headers })
           .subscribe(
@@ -193,7 +253,8 @@ export class DetailpengirimanPage {
             book: this.book,
             detailbook: detailbook,
             userid: this.userid,
-            notruk: this.notruk
+            notruk: this.notruk,
+            idtruk: this.idtruk
           });
         }
         else {

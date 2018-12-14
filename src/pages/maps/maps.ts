@@ -3,6 +3,8 @@ import { App, ToastController, IonicPage, NavController, LoadingController, NavP
 import { ApiProvider } from '../../providers/api/api';
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Http, Headers, RequestOptions } from '@angular/http';
+import { BackgroundMode } from '@ionic-native/background-mode';
+import { Insomnia } from '@ionic-native/insomnia';
 import moment from 'moment';
 import {
   GoogleMaps,
@@ -54,6 +56,7 @@ export class MapsPage {
   public userid: any;
   public notruk: any;
   public start = false;
+  public idtruk: any;
   map: GoogleMap;
 
   constructor(
@@ -62,7 +65,50 @@ export class MapsPage {
     public navParam: NavParams,
     public toastCtrl: ToastController,
     public app: App,
-    public api: ApiProvider) {
+    public api: ApiProvider,
+    public backgroundMode: BackgroundMode,
+    private insomnia: Insomnia) {
+    this.insomnia.keepAwake()
+      .then(
+        () => console.log('success'),
+        () => console.log('error')
+      );
+    this.backgroundMode.enable();
+    this.backgroundMode.on("activate").subscribe(() => {
+      this.nobooking = this.navParam.get('nobooking')
+      this.book = this.navParam.get('book')
+      this.detailbook = this.navParam.get('detailbook')
+      this.userid = this.navParam.get('userid')
+      this.notruk = this.navParam.get('notruk')
+      this.idtruk = this.navParam.get('idtruk')
+      this.interval = setInterval(() => {
+        let option: MyLocationOptions = {
+          enableHighAccuracy: true
+        }
+        LocationService.getMyLocation(option).then((location: MyLocation) => {
+          let lat = location.latLng.lat
+          let lon = location.latLng.lng
+          let idtruck = this.idtruk
+          console.log(idtruck)
+          if (idtruck) {
+            this.api.get("table/latlon", { params: { limit: 1, filter: "id_truck='" + idtruck + "' AND status = 'OPEN'", sort: "datetime" + " DESC " } })
+              .subscribe(val => {
+                let data = val['data']
+                if (data.length > 0) {
+                  if (data[0].latitude.substring(0, 8) == lat.toString().substring(0, 8) && data[0].longitude.substring(0, 9) == lon.toString().substring(0, 9)) {
+                  }
+                  else {
+                    this.doInsert(lat, lon)
+                  }
+                }
+                else {
+                  this.doInsert(lat, lon)
+                }
+              });
+          }
+        });
+      }, 5000);
+    });
     this.status = '0'
     this.doGetToken()
     this.loading = this.loadingCtrl.create({
@@ -75,6 +121,7 @@ export class MapsPage {
       this.detailbook = this.navParam.get('detailbook')
       this.userid = this.navParam.get('userid')
       this.notruk = this.navParam.get('notruk')
+      this.idtruk = this.navParam.get('idtruk')
       this.interval = setInterval(() => {
         let option: MyLocationOptions = {
           enableHighAccuracy: true
@@ -82,9 +129,26 @@ export class MapsPage {
         LocationService.getMyLocation(option).then((location: MyLocation) => {
           let lat = location.latLng.lat
           let lon = location.latLng.lng
-          this.doInsert(lat, lon)
+          let idtruck = this.idtruk
+          console.log(idtruck)
+          if (idtruck) {
+            this.api.get("table/latlon", { params: { limit: 1, filter: "id_truck='" + idtruck + "' AND status = 'OPEN'", sort: "datetime" + " DESC " } })
+              .subscribe(val => {
+                let data = val['data']
+                if (data.length > 0) {
+                  if (data[0].latitude.substring(0, 8) == lat.toString().substring(0, 8) && data[0].longitude.substring(0, 9) == lon.toString().substring(0, 9)) {
+                  }
+                  else {
+                    this.doInsert(lat, lon)
+                  }
+                }
+                else {
+                  this.doInsert(lat, lon)
+                }
+              });
+          }
         });
-      }, 10000);
+      }, 5000);
       console.log(this.book)
       this.api.get("tablenav", { params: { limit: 30, table: "CSB_LIVE$Trans_ Sales Entry", filter: "[Receipt No_]=" + "'" + this.nobooking + "' AND [Retail SO No_] != ''" } })
         .subscribe(val => {
@@ -147,6 +211,7 @@ export class MapsPage {
         for (let i = 0; i < datadestination.routes[0].legs[0].steps.length; i++) {
           line.push(datadestination.routes[0].legs[0].steps[i].start_location);
         }
+        console.log(line)
         self.map.addPolyline({
           points: line,
           color: '#0e5ae2',
@@ -268,12 +333,13 @@ export class MapsPage {
         this.api.post("table/latlon",
           {
             "id": nextno,
-            "booking_no" : '',
+            "booking_no": '',
             "id_truck": this.book[0].IdTruk,
             "id_driver": this.userid,
             "latitude": lat,
             "longitude": lon,
-            "datetime": moment().format('YYYY-MM-DD HH:mm:ss')
+            "datetime": moment().format('YYYY-MM-DD HH:mm:ss'),
+            "status": 'OPEN'
           },
           { headers })
           .subscribe(
@@ -291,14 +357,15 @@ export class MapsPage {
         this.api.post("table/latlon",
           {
             "id": nextno,
-            "booking_no" : this.detailbook.NoBooking,
+            "booking_no": this.detailbook.NoBooking,
             "id_truck": this.book[0].IdTruk,
-            "id_driver": this.book[0].IdDriver,
+            "id_driver": this.userid,
             "installer_1": this.book[0].Installer1,
             "installer_2": this.book[0].Installer2,
             "latitude": lat,
             "longitude": lon,
-            "datetime": moment().format('YYYY-MM-DD HH:mm:ss')
+            "datetime": moment().format('YYYY-MM-DD HH:mm:ss'),
+            "status": 'OPEN'
           },
           { headers })
           .subscribe(
@@ -333,9 +400,26 @@ export class MapsPage {
       LocationService.getMyLocation(option).then((location: MyLocation) => {
         let lat = location.latLng.lat
         let lon = location.latLng.lng
-        this.doInsertGoToCust(lat, lon)
+        let idtruck = this.idtruk
+        console.log(idtruck)
+        if (idtruck) {
+          this.api.get("table/latlon", { params: { limit: 1, filter: "id_truck='" + idtruck + "' AND status = 'OPEN'", sort: "datetime" + " DESC " } })
+            .subscribe(val => {
+              let data = val['data']
+              if (data.length > 0) {
+                if (data[0].latitude.substring(0, 8) == lat.toString().substring(0, 8) && data[0].longitude.substring(0, 9) == lon.toString().substring(0, 9)) {
+                }
+                else {
+                  this.doInsertGoToCust(lat, lon)
+                }
+              }
+              else {
+                this.doInsertGoToCust(lat, lon)
+              }
+            });
+        }
       });
-    }, 10000);
+    }, 5000);
     var self = this;
     /*console.log(this.token)
     const headers = new HttpHeaders()
